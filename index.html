@@ -1,168 +1,285 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-
-<body>
-    <div
-        style="display: flex; justify-content: center; gap: 40px; margin-bottom: 20px; font-family: 'Arial', sans-serif;">
-        <div style="text-align: center;">
-            <p style="margin: 0; color: #7f8c8d;">SCORE</p>
-            <h2 id="score" style="margin: 0; color: #2c3e50;">0</h2>
-        </div>
-        <div style="text-align: center;">
-            <p style="margin: 0; color: #7f8c8d;">ACCURACY</p>
-            <h2 id="accuracy" style="margin: 0; color: #2c3e50;">100%</h2>
-        </div>
-        <div style="text-align: center;">
-            <p style="margin: 0; color: #7f8c8d;">TIME</p>
-            <h2 id="timer" style="margin: 0; color: #e74c3c;">30s</h2>
-        </div>
-    </div>
-
-    <div id="play-area" onclick="missClick()"
-        style="position: relative; width: 100%; max-width: 900px; height: 500px; background: #2c3e50; border-radius: 20px; margin: 0 auto; overflow: hidden; cursor: crosshair; border: 4px solid #34495e;">
-    </div>
-
-    <div style="text-align: center; margin-top: 20px;">
-        <button onclick="startGame()" id="start-btn"
-            style="padding: 15px 40px; background: #2ecc71; color: white; border: none; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 18px;">START
-            TRAINING</button>
-    </div>
-
+    <title>Web-Hawk Aim Trainer Pro</title>
     <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+        }
+
+        /* ส่วนแสดงผลสถิติ */
+        .stat-container {
+            display: flex; 
+            justify-content: center; 
+            gap: 40px; 
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+        }
+
+        .stat-label {
+            margin: 0; 
+            color: #7f8c8d; 
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            margin: 0; 
+            color: #2c3e50; 
+            font-size: 28px;
+        }
+
+        /* สนามฝึก */
+        #play-area {
+            position: relative; 
+            width: 100%; 
+            max-width: 900px; 
+            height: 500px; 
+            background: #2c3e50; 
+            border-radius: 20px; 
+            margin: 0 auto; 
+            overflow: hidden; 
+            cursor: crosshair; 
+            border: 4px solid #34495e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
         /* สไตล์ของเป้ายิง */
         .target {
             position: absolute;
             width: 50px;
             height: 50px;
-            background: radial-gradient(circle, #ff7675, #d63031);
-            border: 4px solid white;
+            /* ทำเป็นวงกลมมีจุดแดงตรงกลาง */
+            background: radial-gradient(circle, #ff7675 0%, #ff7675 25%, #d63031 26%, #d63031 100%);
+            border: 3px solid white;
             border-radius: 50%;
             cursor: pointer;
             transition: transform 0.1s;
-            box-shadow: 0 0 15px rgba(214, 48, 49, 0.5);
+            box-shadow: 0 0 15px rgba(214, 48, 49, 0.6);
         }
 
         .target:active {
-            transform: scale(0.8);
+            transform: scale(0.9);
+        }
+
+        #start-btn {
+            padding: 15px 40px; 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 18px;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        #start-btn:hover {
+            background: #27ae60;
+            transform: scale(1.05);
         }
     </style>
-</body>
-<script>
-    // 1. ตั้งค่าตัวแปร (Variables)
-    let score = 0;
-    let totalClicks = 0;
-    let hits = 0;
-    let timeLeft = 30;
-    let gameActive = false;
-    let timerInterval;
-    let lastPositions = []; // สำหรับเช็คจุดเกิดซ้ำ
+</head>
 
-    // 2. ตั้งค่าเสียง (Audio) - พี่สามารถเปลี่ยน URL เป็นไฟล์ในเครื่องได้
-    const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-    const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
+<body>
 
-    const playArea = document.getElementById('play-area');
-    const scoreEl = document.getElementById('score');
-    const accuracyEl = document.getElementById('accuracy');
-    const timerEl = document.getElementById('timer');
+    <div class="stat-container">
+        <div class="stat-box">
+            <p class="stat-label">SCORE</p>
+            <h2 id="score" class="stat-value">0</h2>
+        </div>
+        <div class="stat-box">
+            <p class="stat-label">ACCURACY</p>
+            <h2 id="accuracy" class="stat-value">100%</h2>
+        </div>
+        <div class="stat-box">
+            <p class="stat-label">TIME</p>
+            <h2 id="timer" class="stat-value" style="color: #e74c3c;">30s</h2>
+        </div>
+    </div>
 
-    // 3. ฟังก์ชันเริ่มเกม
-    function startGame() {
-        score = 0;
-        totalClicks = 0;
-        hits = 0;
-        timeLeft = 30;
-        gameActive = true;
-        lastPositions = []; // ล้างค่าตำแหน่งเก่า
-        playArea.innerHTML = '';
-        document.getElementById('start-btn').style.display = 'none';
+    <div id="play-area" onclick="missClick()">
+        </div>
 
-        updateStats();
-        for (let i = 0; i < 3; i++) { createTarget(); }
+    <div style="text-align: center;">
+        <button onclick="startGame()" id="start-btn">START TRAINING</button>
+    </div>
 
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            timerEl.innerText = timeLeft + 's';
-            if (timeLeft <= 0) endGame();
-        }, 1000);
-    }
+    <script>
+        // --- 1. ตั้งค่าตัวแปรสถิติ ---
+        let score = 0;
+        let totalClicks = 0;
+        let hits = 0;
+        let bullseyeHits = 0; // ยิงเข้ากลางเป้า (วงใน)
+        let outerHits = 0;    // ยิงโดนวงนอก
+        let totalMisses = 0;  // คลิกพลาดพื้นหลัง
+        
+        let timeLeft = 30;
+        let gameActive = false;
+        let timerInterval;
+        let lastPositions = []; // เก็บตำแหน่งเป้าเพื่อกันเกิดทับกัน
 
-    // 4. ฟังก์ชันสร้างเป้า (แบบไม่ซ้ำจุดเดิม)
-    function createTarget() {
-        if (!gameActive) return;
+        // --- 2. ตั้งค่าเสียง (Audio) ---
+        const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+        const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
 
-        const target = document.createElement('div');
-        target.className = 'target';
+        const playArea = document.getElementById('play-area');
+        const scoreEl = document.getElementById('score');
+        const accuracyEl = document.getElementById('accuracy');
+        const timerEl = document.getElementById('timer');
 
-        let x, y, isTooClose;
-        let attempts = 0; // กัน Bug กรณีหาที่ว่างไม่ได้
-
-        do {
-            isTooClose = false;
-            x = Math.random() * (playArea.clientWidth - 60);
-            y = Math.random() * (playArea.clientHeight - 60);
-
-            // เช็คระยะห่างจากเป้าอื่นๆ บนจอ
-            lastPositions.forEach(pos => {
-                const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
-                if (distance < 100) isTooClose = true;
-            });
-            attempts++;
-        } while (isTooClose && attempts < 20); // สุ่มใหม่ถ้าใกล้เกินไป แต่ไม่เกิน 20 ครั้ง
-
-        const posObj = { x, y, id: Date.now() + Math.random() };
-        lastPositions.push(posObj);
-
-        target.style.left = x + 'px';
-        target.style.top = y + 'px';
-
-        target.onclick = (e) => {
-            e.stopPropagation();
-            hitSound.currentTime = 0; // ให้เสียงเริ่มใหม่ทันที
-            hitSound.play();
-
-            hits++;
-            totalClicks++;
-            score += 100;
-
-            lastPositions = lastPositions.filter(p => p.id !== posObj.id);
-            target.remove();
-            createTarget();
+        // --- 3. ฟังก์ชันเริ่มเกม ---
+        function startGame() {
+            // Reset ค่าทั้งหมด
+            score = 0;
+            totalClicks = 0;
+            hits = 0;
+            bullseyeHits = 0;
+            outerHits = 0;
+            totalMisses = 0;
+            timeLeft = 30;
+            gameActive = true;
+            lastPositions = [];
+            
+            playArea.innerHTML = '';
+            document.getElementById('start-btn').style.display = 'none';
             updateStats();
-        };
 
-        playArea.appendChild(target);
-    }
+            // สร้างเป้าเริ่มต้น 3 อัน
+            for (let i = 0; i < 3; i++) { 
+                createTarget(); 
+            }
 
-    // 5. ฟังก์ชันคลิกพลาด
-    function missClick() {
-        if (!gameActive) return;
-        missSound.currentTime = 0;
-        missSound.play();
-        totalClicks++;
-        score = Math.max(0, score - 50);
-        updateStats();
-    }
+            // ตัวนับเวลา
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft + 's';
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
 
-    function updateStats() {
-        scoreEl.innerText = score;
-        const acc = totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100);
-        accuracyEl.innerText = acc + '%';
-    }
+        // --- 4. ฟังก์ชันสร้างเป้า (แบบสุ่มพิกัดและไม่ซ้ำจุดเดิม) ---
+        function createTarget() {
+            if (!gameActive) return;
 
-    function endGame() {
-        gameActive = false;
-        clearInterval(timerInterval);
-        alert(`Time's up! Score: ${score} | Acc: ${accuracyEl.innerText}`);
-        document.getElementById('start-btn').style.display = 'inline-block';
-    }
-</script>
+            const target = document.createElement('div');
+            target.className = 'target';
 
+            let x, y, isTooClose;
+            let attempts = 0;
+
+            do {
+                isTooClose = false;
+                // สุ่ม X, Y ภายในขอบเขตสนาม (หักลบขนาดตัวเป้า 50px)
+                x = Math.random() * (playArea.clientWidth - 60);
+                y = Math.random() * (playArea.clientHeight - 60);
+
+                // เช็คว่าใกล้จุดเดิมที่มีอยู่บนจอเกินไปไหม (ป้องกันการกดย้ำที่เดิม)
+                lastPositions.forEach(pos => {
+                    const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
+                    if (distance < 120) isTooClose = true; // ระยะห่างขั้นต่ำ 120px
+                });
+                attempts++;
+            } while (isTooClose && attempts < 20);
+
+            const posObj = { x, y, id: Date.now() + Math.random() };
+            lastPositions.push(posObj);
+
+            target.style.left = x + 'px';
+            target.style.top = y + 'px';
+
+            // เมื่อคลิกโดนเป้า
+            target.onclick = (e) => {
+                e.stopPropagation(); // กันไม่ให้ไปรันฟังก์ชัน missClick
+                hitSound.currentTime = 0;
+                hitSound.play();
+
+                // คำนวณความแม่นยำจุดที่คลิก (หาจุดศูนย์กลาง)
+                const centerX = 25; // ครึ่งหนึ่งของความกว้างเป้า
+                const centerY = 25;
+                const clickX = e.offsetX;
+                const clickY = e.offsetY;
+                const distanceFromCenter = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
+
+                if (distanceFromCenter <= 12) {
+                    bullseyeHits++; // เข้าวงแดงตรงกลาง
+                    score += 150;    // คะแนนโบนัส
+                } else {
+                    outerHits++;    // เข้าวงนอก
+                    score += 100;
+                }
+
+                hits++;
+                totalClicks++;
+                
+                // ลบตำแหน่งนี้ออกจากลิสต์ และสร้างเป้าใหม่
+                lastPositions = lastPositions.filter(p => p.id !== posObj.id);
+                target.remove();
+                createTarget();
+                updateStats();
+            };
+
+            playArea.appendChild(target);
+        }
+
+        // --- 5. ฟังก์ชันเมื่อคลิกพลาด ---
+        function missClick() {
+            if (!gameActive) return;
+            missSound.currentTime = 0;
+            missSound.play();
+            
+            totalClicks++;
+            totalMisses++;
+            score = Math.max(0, score - 50); // พลาดหักคะแนน
+            updateStats();
+        }
+
+        function updateStats() {
+            scoreEl.innerText = score;
+            const acc = totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100);
+            accuracyEl.innerText = acc + '%';
+        }
+
+        // --- 6. ฟังก์ชันจบเกมและสรุปสถิติละเอียด ---
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            
+            // คำนวณ % การยิงเข้าเป้าแต่ละโซน
+            const bullPercent = hits === 0 ? 0 : Math.round((bullseyeHits / hits) * 100);
+            const outerPercent = hits === 0 ? 0 : Math.round((outerHits / hits) * 100);
+
+            const summary = `
+🎯 จบการฝึกซ้อม!
+----------------------------
+คะแนนรวม: ${score}
+Accuracy: ${accuracyEl.innerText}
+
+📍 สถิติจุดตกกระสุน:
+- เข้ากลาง (Bullseye): ${bullseyeHits} ครั้ง (${bullPercent}%)
+- วงนอก (Outer Circle): ${outerHits} ครั้ง (${outerPercent}%)
+
+❌ คลิกพลาดพื้นหลัง: ${totalMisses} ครั้ง
+----------------------------
+            `;
+            
+            alert(summary);
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('start-btn').innerText = 'TRAIN AGAIN';
+        }
+    </script>
+</body>
 
 </html>
