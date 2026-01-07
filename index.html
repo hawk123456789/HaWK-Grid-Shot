@@ -4,161 +4,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Web-Hawk Aim Trainer: Dynamic Difficulty</title>
+    <title>Aim By. Hawk</title>
     <style>
         :root {
-            --primary-color: #2ecc71;
-            --play-area-bg: #2c3e50;
+            --primary: #00ffcc;
+            --accent: #ff4757;
+            --bg: #0f1722;
+            --panel: rgba(20, 30, 48, 0.8);
         }
 
         body {
-            background-color: #f4f7f6;
-            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 10px;
-            margin: 0;
-            touch-action: manipulation;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .stat-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .stat-box {
-            text-align: center;
-            flex: 1;
-        }
-
-        .stat-label {
-            margin: 0;
-            color: #7f8c8d;
-            font-size: 12px;
+        .header {
+            margin-top: 10px;
+            text-shadow: 0 0 10px var(--primary);
+            font-size: 24px;
+            letter-spacing: 3px;
             font-weight: bold;
-            text-transform: uppercase;
         }
 
-        .stat-value {
-            margin: 0;
-            color: #2c3e50;
-            font-size: clamp(1.2rem, 5vw, 1.8rem);
+        .main-container {
+            display: flex;
+            width: 98%;
+            max-width: 1300px;
+            gap: 15px;
+            margin-top: 15px;
+            height: 75vh;
         }
 
         #play-area {
             position: relative;
-            width: 100%;
-            max-width: 900px;
-            height: 60vh;
-            max-height: 500px;
-            background: var(--play-area-bg);
-            border-radius: 20px;
+            flex: 3;
+            background: radial-gradient(circle, #1e272e 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-color: #0b0f15;
+            border: 2px solid #2f3542;
+            border-radius: 10px;
             overflow: hidden;
             cursor: crosshair;
-            border: 4px solid #34495e;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        /* สไตล์พื้นฐานของเป้า */
-        .target {
-            position: absolute;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 0 15px rgba(214, 48, 49, 0.6);
-            touch-action: none;
-            transition: transform 0.05s;
-        }
-
-        .controls {
+        .sidebar {
+            flex: 0.9;
+            background: var(--panel);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #2f3542;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin-top: 20px;
-            width: 100%;
+            gap: 10px;
         }
 
-        #start-btn {
-            padding: 12px 40px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 50px;
+        .hud-box {
+            border-left: 4px solid var(--primary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+        }
+
+        .hud-label {
+            font-size: 11px;
+            color: #747d8c;
+            margin: 0;
+        }
+
+        .hud-value {
+            font-size: 20px;
             font-weight: bold;
-            cursor: pointer;
+            margin: 2px 0 0;
+            color: #fff;
+        }
+
+        .highlight {
+            color: var(--accent);
+        }
+
+        .rank-value {
+            color: #f1c40f;
             font-size: 18px;
         }
 
-        .volume-box {
+        /* สีทองสำหรับ Rank */
+
+        .target {
+            position: absolute;
+            border-radius: 50%;
+            background-color: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            z-index: 5;
+            cursor: pointer;
+            border: 2px solid #fff;
+            touch-action: none;
+        }
+
+        .footer {
+            margin-top: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
-            color: #7f8c8d;
-            font-size: 14px;
+            gap: 30px;
+        }
+
+        #start-btn {
+            padding: 12px 50px;
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.2s;
+        }
+
+        #start-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
         }
     </style>
 </head>
 
 <body>
 
-    <div class="stat-container">
-        <div class="stat-box">
-            <p class="stat-label">SCORE</p>
-            <h2 id="score" class="stat-value">0</h2>
-        </div>
-        <div class="stat-box">
-            <p class="stat-label">ACCURACY</p>
-            <h2 id="accuracy" class="stat-value">100%</h2>
-        </div>
-        <div class="stat-box">
-            <p class="stat-label">TIME</p>
-            <h2 id="timer" class="stat-value" style="color: #e74c3c;">30s</h2>
+    <div class="header">Aim By. Hawk</div>
+
+    <div class="main-container">
+        <div id="play-area"></div>
+
+        <div class="sidebar">
+            <div class="hud-box">
+                <p class="hud-label">DATA.SCORE</p>
+                <p id="rt-score" class="hud-value">0000</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">DATA.RANK</p>
+                <p id="rt-rank" class="hud-value rank-value">-</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">DATA.ACCURACY</p>
+                <p id="rt-accuracy" class="hud-value">100%</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">DATA.TIMER</p>
+                <p id="rt-timer" class="hud-value highlight">30.0s</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">DATA.BULLSEYE</p>
+                <p id="rt-bullseye" class="hud-value">0</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">DATA.MISS</p>
+                <p id="rt-miss" class="hud-value">0</p>
+            </div>
+            <div class="hud-box" style="border-color: #57606f;">
+                <p class="hud-label">SYSTEM.STATUS</p>
+                <p id="level-tag" class="hud-value" style="font-size:16px;">READY</p>
+            </div>
         </div>
     </div>
 
-    <div id="play-area"></div>
-
-    <div class="controls">
-        <button id="start-btn">START TRAINING</button>
-        <div class="volume-box">
-            <span>🔈</span>
-            <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
-            <span id="volume-label">50%</span>
-            <span>🔊</span>
+    <div class="footer">
+        <button id="start-btn">Initialize Start</button>
+        <div style="font-size: 12px; color: #747d8c;">
+            VOL: <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
         </div>
-        <div id="level-display" style="color: #34495e; font-weight: bold;">Level: 1 (Easy)</div>
     </div>
 
     <script>
         (function () {
-            let score = 0, totalClicks = 0, hits = 0;
-            let bullseyeHits = 0, outerHits = 0, totalMisses = 0;
-            let timeLeft = 30, gameActive = false, timerInterval;
-            let lastPositions = [];
+            let score = 0, totalClicks = 0, hits = 0, bullseyeHits = 0, totalMisses = 0;
+            let timeLeft = 30.0, gameActive = false, timerInterval;
 
             const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
             const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
 
-            const playArea = document.getElementById('play-area');
-            const scoreEl = document.getElementById('score');
-            const accuracyEl = document.getElementById('accuracy');
-            const timerEl = document.getElementById('timer');
-            const volInput = document.getElementById('volume-control');
-            const volLabel = document.getElementById('volume-label');
-            const startBtn = document.getElementById('start-btn');
-            const levelEl = document.getElementById('level-display');
+            const playArea = document.getElementById('play-area'),
+                rtScore = document.getElementById('rt-score'),
+                rtRank = document.getElementById('rt-rank'),
+                rtAccuracy = document.getElementById('rt-accuracy'),
+                rtTimer = document.getElementById('rt-timer'),
+                rtBullseye = document.getElementById('rt-bullseye'),
+                rtMiss = document.getElementById('rt-miss'),
+                levelTag = document.getElementById('level-tag'),
+                startBtn = document.getElementById('start-btn');
 
-            function updateVolume() {
-                hitSound.volume = missSound.volume = volInput.value;
-                volLabel.innerText = Math.round(volInput.value * 100) + '%';
-            }
-            volInput.addEventListener('input', updateVolume);
-            updateVolume();
+            const volInput = document.getElementById('volume-control');
+            volInput.addEventListener('input', () => { hitSound.volume = missSound.volume = volInput.value; });
 
             playArea.addEventListener('pointerdown', (e) => {
                 if (!gameActive || e.target !== playArea) return;
@@ -170,107 +209,72 @@
 
             startBtn.addEventListener('click', () => {
                 if (gameActive) return;
-                score = 0; totalClicks = 0; hits = 0; bullseyeHits = 0; outerHits = 0; totalMisses = 0;
-                timeLeft = 30; gameActive = true;
+                resetGame();
+                gameActive = true;
+                levelTag.innerText = "ACTIVE";
+                for (let i = 0; i < 3; i++) spawnTarget();
+
+                timerInterval = setInterval(() => {
+                    timeLeft -= 0.1;
+                    if (timeLeft <= 0) { timeLeft = 0; endGame(); }
+                    rtTimer.innerText = timeLeft.toFixed(1) + 's';
+                }, 100);
+            });
+
+            function resetGame() {
+                score = 0; totalClicks = 0; hits = 0; bullseyeHits = 0; totalMisses = 0;
+                timeLeft = 30.0;
                 playArea.innerHTML = '';
                 startBtn.style.visibility = 'hidden';
                 updateStats();
-                for (let i = 0; i < 3; i++) createTarget();
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    timerEl.innerText = timeLeft + 's';
-                    if (timeLeft <= 0) endGame();
-                }, 1000);
-            });
+            }
 
-            function createTarget() {
+            function spawnTarget() {
                 if (!gameActive) return;
                 const target = document.createElement('div');
                 target.className = 'target';
-                const spawnTime = Date.now();
-
-                // --- 🎯 ระบบคำนวณขนาดเป้าตามช่วงคะแนน ---
-                let currentSize = 35; // ขนาดเริ่มต้น (โปร)
-                let levelName = "Pro";
-
-                if (score <= 1500) {
-                    currentSize = 70; // ขนาดใหญ่พิเศษ
-                    levelName = "Level 1: Easy";
-                } else if (score <= 2500) {
-                    currentSize = 56; // ลดลง 20% จาก 70
-                    levelName = "Level 2: Medium";
-                } else if (score <= 4000) {
-                    currentSize = 45; // ลดลงอีก 20% จาก 56
-                    levelName = "Level 3: Hard";
-                } else {
-                    currentSize = 35; // เล็กสุด
-                    levelName = "Level 4: PRO MODE";
-                }
-
-                levelEl.innerText = levelName;
-                target.style.width = currentSize + 'px';
-                target.style.height = currentSize + 'px';
-                target.style.background = `radial-gradient(circle, #ff7675 0%, #ff7675 25%, #d63031 26%, #d63031 100%)`;
-
-                let x, y, isTooClose;
-                do {
-                    isTooClose = false;
-                    x = Math.random() * (playArea.clientWidth - currentSize - 10);
-                    y = Math.random() * (playArea.clientHeight - currentSize - 10);
-                    lastPositions.forEach(p => {
-                        if (Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2)) < 100) isTooClose = true;
-                    });
-                } while (isTooClose);
-
-                const posObj = { x, y, id: Math.random() };
-                lastPositions.push(posObj);
-                target.style.left = x + 'px'; target.style.top = y + 'px';
+                let size = score <= 1500 ? 70 : score <= 2500 ? 56 : score <= 4000 ? 45 : 35;
+                target.style.width = target.style.height = size + 'px';
+                target.style.left = Math.random() * (playArea.clientWidth - size - 10) + 'px';
+                target.style.top = Math.random() * (playArea.clientHeight - size - 10) + 'px';
 
                 target.addEventListener('pointerdown', (e) => {
+                    if (!gameActive) return;
                     e.stopPropagation();
-                    if (Date.now() - spawnTime < 150) return; // Anti-cheat
-
                     hitSound.currentTime = 0; hitSound.play();
                     const rect = target.getBoundingClientRect();
-                    const centerX = rect.width / 2;
-                    const centerY = rect.height / 2;
-                    const clickX = e.clientX - rect.left;
-                    const clickY = e.clientY - rect.top;
-
-                    const dist = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
-
-                    // Bullseye คือระยะ 25% ของขนาดเป้าในขณะนั้น
-                    if (dist <= (rect.width * 0.25)) {
-                        bullseyeHits++; score += 150;
-                    } else {
-                        outerHits++; score += 100;
-                    }
-
+                    const dist = Math.sqrt(Math.pow((e.clientX - rect.left) - (size / 2), 2) + Math.pow((e.clientY - rect.top) - (size / 2), 2));
+                    if (dist <= (size * 0.25)) { bullseyeHits++; score += 150; } else { score += 100; }
                     hits++; totalClicks++;
-                    lastPositions = lastPositions.filter(p => p.id !== posObj.id);
-                    target.remove();
-                    createTarget();
-                    updateStats();
-                    if (navigator.vibrate) navigator.vibrate(20);
+                    target.remove(); spawnTarget(); updateStats();
                 });
                 playArea.appendChild(target);
             }
 
+            function getRank(s) {
+                if (s <= 500) return "เด็กกาโปก";
+                if (s <= 1500) return "เด็กกาโปกV2";
+                if (s <= 4000) return "เด็กพึ่งเกิด";
+                if (s <= 6500) return "เด็กบ้านพึ่งมีคอม";
+                if (s <= 7500) return "ทั่วไป";
+                return "เก่งไปไอสัด";
+            }
+
             function updateStats() {
-                scoreEl.innerText = score;
-                accuracyEl.innerText = (totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100)) + '%';
+                rtScore.innerText = score.toString().padStart(4, '0');
+                rtRank.innerText = getRank(score);
+                rtAccuracy.innerText = (totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100)) + '%';
+                rtBullseye.innerText = bullseyeHits;
+                rtMiss.innerText = totalMisses;
             }
 
             function endGame() {
                 gameActive = false;
                 clearInterval(timerInterval);
-                const bullP = hits === 0 ? 0 : Math.round((bullseyeHits / hits) * 100);
-                const outerP = hits === 0 ? 0 : Math.round((outerHits / hits) * 100);
-
-                alert(`🎯 สรุปผลการฝึก\n------------------\nคะแนนรวม: ${score}\nความแม่นยำ: ${accuracyEl.innerText}\n\n📍 สถิติจุดตกกระสุน:\n- Bullseye (กลาง): ${bullseyeHits} ครั้ง (${bullP}%)\n- Outer (รอบนอก): ${outerHits} ครั้ง (${outerP}%)\n\n❌ คลิกพลาด: ${totalMisses} ครั้ง`);
-
+                playArea.innerHTML = '';
+                levelTag.innerText = "FINISHED";
                 startBtn.style.visibility = 'visible';
-                startBtn.innerText = 'TRAIN AGAIN';
+                startBtn.innerText = 'Run Again';
             }
         })();
     </script>
