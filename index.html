@@ -4,19 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Aim By. Hawk</title>
+    <title>Aim By. Hawk - Balanced Scoring</title>
     <style>
         :root {
             --primary: #00ffcc;
             --accent: #ff4757;
-            --bg: #0f1722;
-            --panel: rgba(20, 30, 48, 0.8);
+            --bg: #0b0f15;
+            --panel: rgba(20, 30, 48, 0.9);
         }
 
         body {
             background-color: var(--bg);
             color: white;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Consolas', monospace;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -26,108 +26,99 @@
         }
 
         .header {
-            margin-top: 10px;
-            text-shadow: 0 0 10px var(--primary);
-            font-size: 24px;
-            letter-spacing: 3px;
+            margin-top: 15px;
+            text-shadow: 0 0 15px var(--primary);
+            font-size: 28px;
             font-weight: bold;
+            letter-spacing: 4px;
         }
 
         .main-container {
             display: flex;
             width: 98%;
-            max-width: 1300px;
-            gap: 15px;
+            max-width: 1400px;
+            gap: 20px;
             margin-top: 15px;
-            height: 75vh;
+            height: 78vh;
         }
 
         #play-area {
             position: relative;
-            flex: 3;
-            background: radial-gradient(circle, #1e272e 1px, transparent 1px);
-            background-size: 40px 40px;
-            background-color: #0b0f15;
+            flex: 3.5;
+            background-image: linear-gradient(#1e272e 1px, transparent 1px), linear-gradient(90deg, #1e272e 1px, transparent 1px);
+            background-size: 50px 50px;
+            background-color: #05080c;
             border: 2px solid #2f3542;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             cursor: crosshair;
         }
 
         .sidebar {
-            flex: 0.9;
+            flex: 1;
             background: var(--panel);
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 20px;
             border: 1px solid #2f3542;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
         }
 
         .hud-box {
             border-left: 4px solid var(--primary);
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             padding: 10px;
         }
 
         .hud-label {
-            font-size: 11px;
+            font-size: 10px;
             color: #747d8c;
             margin: 0;
+            text-transform: uppercase;
         }
 
         .hud-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             margin: 2px 0 0;
             color: #fff;
         }
 
-        .highlight {
-            color: var(--accent);
-        }
-
-        .rank-value {
-            color: #f1c40f;
-            font-size: 18px;
-        }
-
-        /* สีทองสำหรับ Rank */
-
         .target {
             position: absolute;
             border-radius: 50%;
             background-color: var(--primary);
-            box-shadow: 0 0 15px var(--primary);
+            box-shadow: 0 0 20px var(--primary);
             z-index: 5;
-            cursor: pointer;
             border: 2px solid #fff;
             touch-action: none;
         }
 
         .footer {
-            margin-top: 20px;
+            margin-top: 15px;
             display: flex;
             align-items: center;
-            gap: 30px;
+            gap: 40px;
         }
 
         #start-btn {
-            padding: 12px 50px;
+            padding: 15px 60px;
             background: transparent;
             color: var(--primary);
             border: 2px solid var(--primary);
             font-weight: bold;
-            font-size: 18px;
+            font-size: 20px;
             cursor: pointer;
             text-transform: uppercase;
-            transition: 0.2s;
+            transition: 0.3s;
         }
 
         #start-btn:hover {
             background: var(--primary);
-            color: var(--bg);
+            color: #000;
+            box-shadow: 0 0 30px var(--primary);
         }
     </style>
 </head>
@@ -138,50 +129,53 @@
 
     <div class="main-container">
         <div id="play-area"></div>
-
         <div class="sidebar">
             <div class="hud-box">
-                <p class="hud-label">DATA.SCORE</p>
+                <p class="hud-label">SCORE</p>
                 <p id="rt-score" class="hud-value">0000</p>
             </div>
-            <div class="hud-box">
-                <p class="hud-label">DATA.RANK</p>
-                <p id="rt-rank" class="hud-value rank-value">-</p>
+            <div class="hud-box" style="border-color:var(--accent)">
+                <p class="hud-label">COMBO</p>
+                <p id="rt-combo" class="hud-value" style="color:var(--accent)">x0</p>
             </div>
             <div class="hud-box">
-                <p class="hud-label">DATA.ACCURACY</p>
+                <p class="hud-label">RANKING</p>
+                <p id="rt-rank" class="hud-value" style="color:#f1c40f; font-size:16px;">READY</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">AVG MS</p>
+                <p id="rt-ms" class="hud-value">0ms</p>
+            </div>
+            <div class="hud-box">
+                <p class="hud-label">ACCURACY</p>
                 <p id="rt-accuracy" class="hud-value">100%</p>
             </div>
             <div class="hud-box">
-                <p class="hud-label">DATA.TIMER</p>
-                <p id="rt-timer" class="hud-value highlight">30.0s</p>
+                <p class="hud-label">TIME LEFT</p>
+                <p id="rt-timer" class="hud-value" style="color:var(--accent)">30.0s</p>
             </div>
-            <div class="hud-box">
-                <p class="hud-label">DATA.BULLSEYE</p>
+            <div class="hud-box" style="margin-top:auto;">
+                <p class="hud-label">BULLSEYE</p>
                 <p id="rt-bullseye" class="hud-value">0</p>
             </div>
             <div class="hud-box">
-                <p class="hud-label">DATA.MISS</p>
+                <p class="hud-label">MISS</p>
                 <p id="rt-miss" class="hud-value">0</p>
-            </div>
-            <div class="hud-box" style="border-color: #57606f;">
-                <p class="hud-label">SYSTEM.STATUS</p>
-                <p id="level-tag" class="hud-value" style="font-size:16px;">READY</p>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        <button id="start-btn">Initialize Start</button>
-        <div style="font-size: 12px; color: #747d8c;">
-            VOL: <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
-        </div>
+        <button id="start-btn">INITIALIZE</button>
+        <div style="font-size: 12px; color: #747d8c;">VOLUME: <input type="range" id="volume-control" min="0" max="1"
+                step="0.1" value="0.5"></div>
     </div>
 
     <script>
         (function () {
             let score = 0, totalClicks = 0, hits = 0, bullseyeHits = 0, totalMisses = 0;
             let timeLeft = 30.0, gameActive = false, timerInterval;
+            let combo = 0, lastHitTime = 0, reactionTimes = [];
 
             const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
             const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
@@ -193,7 +187,8 @@
                 rtTimer = document.getElementById('rt-timer'),
                 rtBullseye = document.getElementById('rt-bullseye'),
                 rtMiss = document.getElementById('rt-miss'),
-                levelTag = document.getElementById('level-tag'),
+                rtCombo = document.getElementById('rt-combo'),
+                rtMs = document.getElementById('rt-ms'),
                 startBtn = document.getElementById('start-btn');
 
             const volInput = document.getElementById('volume-control');
@@ -203,7 +198,8 @@
                 if (!gameActive || e.target !== playArea) return;
                 missSound.currentTime = 0; missSound.play();
                 totalClicks++; totalMisses++;
-                score = Math.max(0, score - 50);
+                combo = 0; // ล้าง Combo ทันทีที่พลาด
+                score = Math.max(0, score - 100); // Penalty หนักขึ้น
                 updateStats();
             });
 
@@ -211,9 +207,8 @@
                 if (gameActive) return;
                 resetGame();
                 gameActive = true;
-                levelTag.innerText = "ACTIVE";
+                lastHitTime = Date.now();
                 for (let i = 0; i < 3; i++) spawnTarget();
-
                 timerInterval = setInterval(() => {
                     timeLeft -= 0.1;
                     if (timeLeft <= 0) { timeLeft = 0; endGame(); }
@@ -222,10 +217,8 @@
             });
 
             function resetGame() {
-                score = 0; totalClicks = 0; hits = 0; bullseyeHits = 0; totalMisses = 0;
-                timeLeft = 30.0;
-                playArea.innerHTML = '';
-                startBtn.style.visibility = 'hidden';
+                score = 0; totalClicks = 0; hits = 0; bullseyeHits = 0; totalMisses = 0; combo = 0; reactionTimes = [];
+                timeLeft = 30.0; playArea.innerHTML = ''; startBtn.style.visibility = 'hidden';
                 updateStats();
             }
 
@@ -233,7 +226,7 @@
                 if (!gameActive) return;
                 const target = document.createElement('div');
                 target.className = 'target';
-                let size = score <= 1500 ? 70 : score <= 2500 ? 56 : score <= 4000 ? 45 : 35;
+                let size = score <= 1000 ? 70 : score <= 2000 ? 56 : score <= 3500 ? 45 : 35;
                 target.style.width = target.style.height = size + 'px';
                 target.style.left = Math.random() * (playArea.clientWidth - size - 10) + 'px';
                 target.style.top = Math.random() * (playArea.clientHeight - size - 10) + 'px';
@@ -242,9 +235,24 @@
                     if (!gameActive) return;
                     e.stopPropagation();
                     hitSound.currentTime = 0; hitSound.play();
+
+                    const now = Date.now();
+                    reactionTimes.push(now - lastHitTime);
+                    lastHitTime = now;
+
                     const rect = target.getBoundingClientRect();
                     const dist = Math.sqrt(Math.pow((e.clientX - rect.left) - (size / 2), 2) + Math.pow((e.clientY - rect.top) - (size / 2), 2));
-                    if (dist <= (size * 0.25)) { bullseyeHits++; score += 150; } else { score += 100; }
+
+                    // --- ⚙️ สูตรคำนวณคะแนนใหม่ 2.0 ---
+                    combo++;
+                    let isBullseye = dist <= (size * 0.25);
+                    let basePoints = isBullseye ? 100 : 50; // ลด Base score
+                    if (isBullseye) bullseyeHits++;
+
+                    // Combo Bonus: สูงสุดไม่เกิน +50 ต่อการยิง
+                    let comboBonus = Math.min(combo * 5, 50);
+
+                    score += basePoints + comboBonus;
                     hits++; totalClicks++;
                     target.remove(); spawnTarget(); updateStats();
                 });
@@ -252,11 +260,12 @@
             }
 
             function getRank(s) {
-                if (s <= 500) return "เด็กกาโปก";
-                if (s <= 1500) return "เด็กกาโปกV2";
-                if (s <= 4000) return "เด็กพึ่งเกิด";
-                if (s <= 6500) return "เด็กบ้านพึ่งมีคอม";
-                if (s <= 7500) return "ทั่วไป";
+                // ปรับช่วงคะแนนใหม่ให้เข้ากับความยากที่เพิ่มขึ้น
+                if (s <= 300) return "เด็กกาโปก";
+                if (s <= 1000) return "เด็กกาโปกV2";
+                if (s <= 2500) return "เด็กพึ่งเกิด";
+                if (s <= 4500) return "เด็กบ้านพึ่งมีคอม";
+                if (s <= 6000) return "ทั่วไป";
                 return "เก่งไปไอสัด";
             }
 
@@ -266,13 +275,14 @@
                 rtAccuracy.innerText = (totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100)) + '%';
                 rtBullseye.innerText = bullseyeHits;
                 rtMiss.innerText = totalMisses;
+                rtCombo.innerText = `x${combo}`;
+                const avgMs = reactionTimes.length > 0 ? Math.round(reactionTimes.reduce((a, b) => a + b) / reactionTimes.length) : 0;
+                rtMs.innerText = avgMs + "ms";
             }
 
             function endGame() {
-                gameActive = false;
-                clearInterval(timerInterval);
+                gameActive = false; clearInterval(timerInterval);
                 playArea.innerHTML = '';
-                levelTag.innerText = "FINISHED";
                 startBtn.style.visibility = 'visible';
                 startBtn.innerText = 'Run Again';
             }
