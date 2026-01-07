@@ -4,27 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Web-Hawk Aim Trainer Mobile Pro</title>
+    <title>Web-Hawk Aim Trainer: Dynamic Difficulty</title>
     <style>
         :root {
             --primary-color: #2ecc71;
-            --bg-color: #f4f7f6;
             --play-area-bg: #2c3e50;
         }
 
         body {
-            background-color: var(--bg-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 10px;
             margin: 0;
             touch-action: manipulation;
-            /* ป้องกัน Double Tap Zoom */
         }
 
-        /* ส่วนแสดงผลสถิติ */
         .stat-container {
             display: flex;
             justify-content: center;
@@ -53,13 +50,11 @@
             font-size: clamp(1.2rem, 5vw, 1.8rem);
         }
 
-        /* สนามฝึก */
         #play-area {
             position: relative;
             width: 100%;
             max-width: 900px;
             height: 60vh;
-            /* ใช้หน่วย vh เพื่อให้พอดีกับหน้าจอมือถือ */
             max-height: 500px;
             background: var(--play-area-bg);
             border-radius: 20px;
@@ -69,26 +64,14 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         }
 
-        /* สไตล์ของเป้ายิง */
+        /* สไตล์พื้นฐานของเป้า */
         .target {
             position: absolute;
-            width: 50px;
-            height: 50px;
-            background: radial-gradient(circle, #ff7675 0%, #ff7675 25%, #d63031 26%, #d63031 100%);
             border: 3px solid white;
             border-radius: 50%;
-            cursor: pointer;
-            transition: transform 0.05s;
             box-shadow: 0 0 15px rgba(214, 48, 49, 0.6);
             touch-action: none;
-        }
-
-        /* ปรับขนาดเป้าบนมือถือ */
-        @media (max-width: 600px) {
-            .target {
-                width: 45px;
-                height: 45px;
-            }
+            transition: transform 0.05s;
         }
 
         .controls {
@@ -109,7 +92,6 @@
             font-weight: bold;
             cursor: pointer;
             font-size: 18px;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
         }
 
         .volume-box {
@@ -118,10 +100,6 @@
             gap: 10px;
             color: #7f8c8d;
             font-size: 14px;
-        }
-
-        input[type="range"] {
-            cursor: pointer;
         }
     </style>
 </head>
@@ -146,146 +124,155 @@
     <div id="play-area"></div>
 
     <div class="controls">
-        <button onclick="startGame()" id="start-btn">START TRAINING</button>
-
+        <button id="start-btn">START TRAINING</button>
         <div class="volume-box">
             <span>🔈</span>
             <input type="range" id="volume-control" min="0" max="1" step="0.1" value="0.5">
             <span id="volume-label">50%</span>
             <span>🔊</span>
         </div>
+        <div id="level-display" style="color: #34495e; font-weight: bold;">Level: 1 (Easy)</div>
     </div>
 
     <script>
-        let score = 0, totalClicks = 0, hits = 0;
-        let bullseyeHits = 0, outerHits = 0, totalMisses = 0;
-        let timeLeft = 30, gameActive = false, timerInterval;
-        let lastPositions = [];
+        (function () {
+            let score = 0, totalClicks = 0, hits = 0;
+            let bullseyeHits = 0, outerHits = 0, totalMisses = 0;
+            let timeLeft = 30, gameActive = false, timerInterval;
+            let lastPositions = [];
 
-        const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
-        const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
+            const hitSound = new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3');
+            const missSound = new Audio('https://www.soundjay.com/buttons/sounds/button-10.mp3');
 
-        const playArea = document.getElementById('play-area');
-        const scoreEl = document.getElementById('score');
-        const accuracyEl = document.getElementById('accuracy');
-        const timerEl = document.getElementById('timer');
-        const volInput = document.getElementById('volume-control');
-        const volLabel = document.getElementById('volume-label');
+            const playArea = document.getElementById('play-area');
+            const scoreEl = document.getElementById('score');
+            const accuracyEl = document.getElementById('accuracy');
+            const timerEl = document.getElementById('timer');
+            const volInput = document.getElementById('volume-control');
+            const volLabel = document.getElementById('volume-label');
+            const startBtn = document.getElementById('start-btn');
+            const levelEl = document.getElementById('level-display');
 
-        // ระบบเสียง
-        function updateVolume() {
-            const v = volInput.value;
-            hitSound.volume = v;
-            missSound.volume = v;
-            volLabel.innerText = Math.round(v * 100) + '%';
-        }
-        volInput.addEventListener('input', updateVolume);
-        updateVolume();
+            function updateVolume() {
+                hitSound.volume = missSound.volume = volInput.value;
+                volLabel.innerText = Math.round(volInput.value * 100) + '%';
+            }
+            volInput.addEventListener('input', updateVolume);
+            updateVolume();
 
-        // คลิกพื้นที่ว่าง (Miss)
-        playArea.addEventListener('pointerdown', (e) => {
-            if (!gameActive || e.target !== playArea) return;
-            missSound.currentTime = 0;
-            missSound.play();
-            totalClicks++;
-            totalMisses++;
-            score = Math.max(0, score - 50);
-            updateStats();
-        });
-
-        function startGame() {
-            score = 0; totalClicks = 0; hits = 0;
-            bullseyeHits = 0; outerHits = 0; totalMisses = 0;
-            timeLeft = 30; gameActive = true;
-            lastPositions = [];
-            playArea.innerHTML = '';
-            document.getElementById('start-btn').style.visibility = 'hidden';
-            updateStats();
-
-            for (let i = 0; i < 3; i++) createTarget();
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerEl.innerText = timeLeft + 's';
-                if (timeLeft <= 0) endGame();
-            }, 1000);
-        }
-
-        function createTarget() {
-            if (!gameActive) return;
-
-            const target = document.createElement('div');
-            target.className = 'target';
-
-            let x, y, isTooClose, attempts = 0;
-            const targetSize = window.innerWidth < 600 ? 45 : 50;
-
-            do {
-                isTooClose = false;
-                x = Math.random() * (playArea.clientWidth - targetSize - 10);
-                y = Math.random() * (playArea.clientHeight - targetSize - 10);
-
-                lastPositions.forEach(pos => {
-                    const dist = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
-                    if (dist < 100) isTooClose = true;
-                });
-                attempts++;
-            } while (isTooClose && attempts < 20);
-
-            const posObj = { x, y, id: Date.now() + Math.random() };
-            lastPositions.push(posObj);
-
-            target.style.left = x + 'px';
-            target.style.top = y + 'px';
-
-            // ระบบคลิกเป้า (รองรับมือถือ)
-            target.addEventListener('pointerdown', (e) => {
-                e.stopPropagation();
-                hitSound.currentTime = 0;
-                hitSound.play();
-
-                const rect = target.getBoundingClientRect();
-                const clickX = e.clientX - rect.left;
-                const clickY = e.clientY - rect.top;
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const dist = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
-
-                if (dist <= (rect.width * 0.25)) {
-                    bullseyeHits++; score += 150;
-                } else {
-                    outerHits++; score += 100;
-                }
-
-                hits++; totalClicks++;
-                lastPositions = lastPositions.filter(p => p.id !== posObj.id);
-                target.remove();
-                createTarget();
+            playArea.addEventListener('pointerdown', (e) => {
+                if (!gameActive || e.target !== playArea) return;
+                missSound.currentTime = 0; missSound.play();
+                totalClicks++; totalMisses++;
+                score = Math.max(0, score - 50);
                 updateStats();
-
-                // สั่นเล็กน้อยสำหรับมือถือ (ถ้าเครื่องรองรับ)
-                if (navigator.vibrate) navigator.vibrate(20);
             });
 
-            playArea.appendChild(target);
-        }
+            startBtn.addEventListener('click', () => {
+                if (gameActive) return;
+                score = 0; totalClicks = 0; hits = 0; bullseyeHits = 0; outerHits = 0; totalMisses = 0;
+                timeLeft = 30; gameActive = true;
+                playArea.innerHTML = '';
+                startBtn.style.visibility = 'hidden';
+                updateStats();
+                for (let i = 0; i < 3; i++) createTarget();
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerEl.innerText = timeLeft + 's';
+                    if (timeLeft <= 0) endGame();
+                }, 1000);
+            });
 
-        function updateStats() {
-            scoreEl.innerText = score;
-            const acc = totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100);
-            accuracyEl.innerText = acc + '%';
-        }
+            function createTarget() {
+                if (!gameActive) return;
+                const target = document.createElement('div');
+                target.className = 'target';
+                const spawnTime = Date.now();
 
-        function endGame() {
-            gameActive = false;
-            clearInterval(timerInterval);
-            const bullP = hits === 0 ? 0 : Math.round((bullseyeHits / hits) * 100);
+                // --- 🎯 ระบบคำนวณขนาดเป้าตามช่วงคะแนน ---
+                let currentSize = 35; // ขนาดเริ่มต้น (โปร)
+                let levelName = "Pro";
 
-            alert(`🎯 จบเกม!\nScore: ${score}\nAccuracy: ${accuracyEl.innerText}\nBullseye: ${bullseyeHits} ครั้ง (${bullP}%)\nMisses: ${totalMisses} ครั้ง`);
+                if (score <= 1500) {
+                    currentSize = 70; // ขนาดใหญ่พิเศษ
+                    levelName = "Level 1: Easy";
+                } else if (score <= 2500) {
+                    currentSize = 56; // ลดลง 20% จาก 70
+                    levelName = "Level 2: Medium";
+                } else if (score <= 4000) {
+                    currentSize = 45; // ลดลงอีก 20% จาก 56
+                    levelName = "Level 3: Hard";
+                } else {
+                    currentSize = 35; // เล็กสุด
+                    levelName = "Level 4: PRO MODE";
+                }
 
-            document.getElementById('start-btn').style.visibility = 'visible';
-            document.getElementById('start-btn').innerText = 'TRY AGAIN';
-        }
+                levelEl.innerText = levelName;
+                target.style.width = currentSize + 'px';
+                target.style.height = currentSize + 'px';
+                target.style.background = `radial-gradient(circle, #ff7675 0%, #ff7675 25%, #d63031 26%, #d63031 100%)`;
+
+                let x, y, isTooClose;
+                do {
+                    isTooClose = false;
+                    x = Math.random() * (playArea.clientWidth - currentSize - 10);
+                    y = Math.random() * (playArea.clientHeight - currentSize - 10);
+                    lastPositions.forEach(p => {
+                        if (Math.sqrt(Math.pow(x - p.x, 2) + Math.pow(y - p.y, 2)) < 100) isTooClose = true;
+                    });
+                } while (isTooClose);
+
+                const posObj = { x, y, id: Math.random() };
+                lastPositions.push(posObj);
+                target.style.left = x + 'px'; target.style.top = y + 'px';
+
+                target.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    if (Date.now() - spawnTime < 150) return; // Anti-cheat
+
+                    hitSound.currentTime = 0; hitSound.play();
+                    const rect = target.getBoundingClientRect();
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const clickX = e.clientX - rect.left;
+                    const clickY = e.clientY - rect.top;
+
+                    const dist = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
+
+                    // Bullseye คือระยะ 25% ของขนาดเป้าในขณะนั้น
+                    if (dist <= (rect.width * 0.25)) {
+                        bullseyeHits++; score += 150;
+                    } else {
+                        outerHits++; score += 100;
+                    }
+
+                    hits++; totalClicks++;
+                    lastPositions = lastPositions.filter(p => p.id !== posObj.id);
+                    target.remove();
+                    createTarget();
+                    updateStats();
+                    if (navigator.vibrate) navigator.vibrate(20);
+                });
+                playArea.appendChild(target);
+            }
+
+            function updateStats() {
+                scoreEl.innerText = score;
+                accuracyEl.innerText = (totalClicks === 0 ? 100 : Math.round((hits / totalClicks) * 100)) + '%';
+            }
+
+            function endGame() {
+                gameActive = false;
+                clearInterval(timerInterval);
+                const bullP = hits === 0 ? 0 : Math.round((bullseyeHits / hits) * 100);
+                const outerP = hits === 0 ? 0 : Math.round((outerHits / hits) * 100);
+
+                alert(`🎯 สรุปผลการฝึก\n------------------\nคะแนนรวม: ${score}\nความแม่นยำ: ${accuracyEl.innerText}\n\n📍 สถิติจุดตกกระสุน:\n- Bullseye (กลาง): ${bullseyeHits} ครั้ง (${bullP}%)\n- Outer (รอบนอก): ${outerHits} ครั้ง (${outerP}%)\n\n❌ คลิกพลาด: ${totalMisses} ครั้ง`);
+
+                startBtn.style.visibility = 'visible';
+                startBtn.innerText = 'TRAIN AGAIN';
+            }
+        })();
     </script>
 </body>
 
